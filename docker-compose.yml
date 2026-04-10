@@ -27,6 +27,8 @@ services:
       # Comment these out for production deployments
       - ./src:/app/src:ro
       - ./train:/app/train
+      # Training output (runs/) — persisted on host, writable without rebuild
+      - ./runs:/app/runs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
       interval: 30s

@@ -18,8 +18,15 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import shutil
 from pathlib import Path
+
+# Must be set before any ultralytics import so the base model is downloaded
+# to /tmp (writable by the non-root container user) instead of the cwd.
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
+_WEIGHTS_DIR = Path("/tmp/ultralytics_weights")
+_WEIGHTS_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -32,13 +39,19 @@ def train(
     imgsz: int = 640,
     batch: int = 16,
     device: str = "cpu",
-    project: str = "runs/corners",
+    project: str = "/app/runs/corners",
     name: str = "corner_detector",
 ) -> None:
     from ultralytics import YOLO  # type: ignore
+    from ultralytics.utils import SETTINGS
 
-    logger.info("Loading base model: %s", model)
-    m = YOLO(model)
+    SETTINGS.update({"weights_dir": str(_WEIGHTS_DIR), "runs_dir": "/app/runs"})
+
+    # Resolve to absolute path so ultralytics downloads into /tmp, not the
+    # read-only cwd (/app owned by root).
+    model_abs = str(_WEIGHTS_DIR / model)
+    logger.info("Loading base model: %s", model_abs)
+    m = YOLO(model_abs)
 
     logger.info("Starting corner detector training (%d epochs)...", epochs)
     m.train(
