@@ -30,7 +30,14 @@ os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 _WEIGHTS_DIR = Path("/tmp/ultralytics_weights")
 _WEIGHTS_DIR.mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("/app/runs/train_pieces.log", mode="a"),
+    ],
+)
 logger = logging.getLogger(__name__)
 
 

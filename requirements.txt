@@ -28,6 +28,8 @@ pydantic-settings>=2.2.0
 # ── Utilities ─────────────────────────────────────────────────────────────────
 Pillow>=10.3.0
 httpx>=0.27.0               # async http client (Lichess integration)
+PyYAML>=6.0.0               # dataset YAML config parsing
+python-dotenv>=1.0.0        # loads .env for training scripts
 
 # ── Dev / Training ────────────────────────────────────────────────────────────
 wandb>=0.17.0               # experiment tracking

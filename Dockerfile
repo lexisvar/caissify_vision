@@ -76,7 +76,7 @@ RUN mkdir -p /app/models/corner_detector \
              /app/models/piece_detector \
              /app/models/square_classifier \
              /app/data \
-    && chown -R chessvision:chessvision /app/models /app/data
+    && chown -R chessvision:chessvision /app
 
 USER chessvision
 

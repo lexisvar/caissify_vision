@@ -83,8 +83,11 @@ def _build_index_remap(src_names: list[str]) -> dict[int, int] | None:
 
 
 def _remap_labels(src_labels_dir: Path, dst_labels_dir: Path,
-                  remap: dict[int, int]) -> None:
-    """Copy & remap class indices in every YOLO .txt label file."""
+                  remap: dict[int, int], prefix: str = "") -> None:
+    """Copy & remap class indices in every YOLO .txt label file.
+    The output filename gets the same prefix as _copy_images so Ultralytics
+    can match images to labels by stem.
+    """
     dst_labels_dir.mkdir(parents=True, exist_ok=True)
     count = 0
     for txt in src_labels_dir.glob("*.txt"):
@@ -98,7 +101,8 @@ def _remap_labels(src_labels_dir: Path, dst_labels_dir: Path,
                 continue                    # skip unknown class
             new_cls = remap[src_cls]
             lines_out.append(f"{new_cls} {' '.join(parts[1:])}")
-        (dst_labels_dir / txt.name).write_text("\n".join(lines_out) + "\n")
+        out_name = f"{prefix}_{txt.name}" if prefix else txt.name
+        (dst_labels_dir / out_name).write_text("\n".join(lines_out) + "\n")
         count += 1
     print(f"    Remapped {count} label files → {dst_labels_dir}")
 
@@ -143,7 +147,7 @@ def _merge_dataset(src_root: Path, dest_root: Path, prefix: str) -> None:
         # Roboflow uses "valid", YOLO convention uses "val"
         dst_split = "val" if split == "valid" else split
         _copy_images(src_images, dest_root / "images" / dst_split, prefix)
-        _remap_labels(src_labels, dest_root / "labels" / dst_split, remap)
+        _remap_labels(src_labels, dest_root / "labels" / dst_split, remap, prefix)
 
 
 def _merge_corners_dataset(src_root: Path, dest_root: Path, prefix: str) -> None:
@@ -181,7 +185,7 @@ def _merge_corners_dataset(src_root: Path, dest_root: Path, prefix: str) -> None
         _copy_images(src_images, dest_root / "images" / dst_split, prefix)
         # Remap: keep only corner_src_idx, map it to class 0
         remap = {corner_src_idx: 0}
-        _remap_labels(src_labels, dest_root / "labels" / dst_split, remap)
+        _remap_labels(src_labels, dest_root / "labels" / dst_split, remap, prefix)
 
 
 def download_and_merge(dest: Path, skip_download: bool = False,

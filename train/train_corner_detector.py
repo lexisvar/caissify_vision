@@ -20,6 +20,7 @@ import argparse
 import logging
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 # Must be set before any ultralytics import so the base model is downloaded
@@ -28,8 +29,15 @@ os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 _WEIGHTS_DIR = Path("/tmp/ultralytics_weights")
 _WEIGHTS_DIR.mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(message)s",
+    handlers=[logging.StreamHandler()],
+)
 logger = logging.getLogger(__name__)
+
+
+_ROOT = Path(os.environ.get("CHESSVISION_ROOT", Path(__file__).parent.parent))
 
 
 def train(
@@ -39,13 +47,38 @@ def train(
     imgsz: int = 640,
     batch: int = 16,
     device: str = "cpu",
-    project: str = "/app/runs/corners",
+    project: str = "",
     name: str = "corner_detector",
 ) -> None:
     from ultralytics import YOLO  # type: ignore
     from ultralytics.utils import SETTINGS
 
-    SETTINGS.update({"weights_dir": str(_WEIGHTS_DIR), "runs_dir": "/app/runs"})
+    runs_dir = _ROOT / "runs"
+    if not project:
+        project = str(runs_dir / "corners")
+
+    # Set up log file
+    log_path = Path(project).parent / "train_corners.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.addHandler(logging.FileHandler(str(log_path), mode="w"))
+    logger.info("Log: %s", log_path)
+
+    SETTINGS.update({"weights_dir": str(_WEIGHTS_DIR), "runs_dir": str(runs_dir)})
+
+    # Resolve data YAML: replace the 'path:' entry so it points to CHESSVISION_ROOT,
+    # not the Docker-only /app path.
+    import yaml  # noqa: PLC0415
+    data_yaml_src = _ROOT / data
+    with open(data_yaml_src) as fh:
+        data_cfg = yaml.safe_load(fh)
+    data_cfg["path"] = str(_ROOT / "data" / "annotated" / "corners")
+    _tmp_yaml = tempfile.NamedTemporaryFile(
+        suffix=".yaml", mode="w", delete=False, prefix="corners_"
+    )
+    yaml.dump(data_cfg, _tmp_yaml)
+    _tmp_yaml.flush()
+    data = _tmp_yaml.name
+    logger.info("Resolved data YAML: %s (path=%s)", data, data_cfg["path"])
 
     # Resolve to absolute path so ultralytics downloads into /tmp, not the
     # read-only cwd (/app owned by root).
@@ -53,7 +86,25 @@ def train(
     logger.info("Loading base model: %s", model_abs)
     m = YOLO(model_abs)
 
+    # ── progress callback: one clean line per epoch to stdout + log ──────────
+    def _on_epoch_end(trainer) -> None:
+        e      = trainer.epoch + 1
+        total  = trainer.epochs
+        pct    = e / total * 100
+        bar    = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+        m_loss = trainer.loss.item() if hasattr(trainer.loss, "item") else float(trainer.loss)
+        lr     = trainer.optimizer.param_groups[0]["lr"]
+        line   = (
+            f"  [{bar}] {pct:5.1f}%  epoch {e:>3}/{total}"
+            f"  loss={m_loss:.4f}  lr={lr:.2e}"
+        )
+        print(line, flush=True)
+        logger.info(line)
+
+    m.add_callback("on_train_epoch_end", _on_epoch_end)
+
     logger.info("Starting corner detector training (%d epochs)...", epochs)
+    logger.info("Log file: %s", log_path)
     m.train(
         data=data,
         imgsz=imgsz,
@@ -62,6 +113,7 @@ def train(
         device=device,
         project=project,
         name=name,
+        verbose=False,        # suppress Ultralytics per-batch spam; use our callback
         # Augmentation — key for diverse board/lighting robustness
         degrees=30.0,         # rotation up to ±30°
         perspective=0.001,    # slight perspective distortion
@@ -79,7 +131,7 @@ def train(
 
     # Copy best weights to models directory
     best = Path(project) / name / "weights" / "best.pt"
-    dest = Path("models/corner_detector/best.pt")
+    dest = _ROOT / "models" / "corner_detector" / "best.pt"
     dest.parent.mkdir(parents=True, exist_ok=True)
     if best.exists():
         shutil.copy(best, dest)

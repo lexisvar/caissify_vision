@@ -28,6 +28,7 @@ runs/
 data/raw/
 data/augmented/
 data/annotated/
+data/tmp_rf_downloads/
 
 # Calibration (machine-specific)
 data/calibration.json
