@@ -21,11 +21,12 @@ services:
     volumes:
       # Model weights — mount as external volume so they persist across rebuilds
       - model_weights:/app/models
-      # Calibration data (homography matrices, camera configs)
-      - ./data/calibration.json:/app/data/calibration.json
-      # Live reload for local development: mount src/ into the container
-      # Comment this out for production deployments
+      # Data directory (calibration JSON + downloaded/merged datasets)
+      - ./data:/app/data
+      # Live reload for local development: mount src/ and train/ into the container
+      # Comment these out for production deployments
       - ./src:/app/src:ro
+      - ./train:/app/train
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
       interval: 30s

@@ -1,23 +1,24 @@
-# pieces.yaml
-# YOLOv8/YOLO11 training config for chess piece detection
-# 12 classes (empty squares are not detected by YOLO; handled by absence)
+# pieces.yaml — auto-updated by train/download_datasets.py
+# 15,097 images merged from:
+#   chess-piece-detection-lydqy/chess-piece-detection-5ipnt v3 (8.7k, mAP 99.1%)
+#   roboflow-100/chess-pieces-mjzgj v2 (289 images)
 
-path: data/annotated/pieces    # dataset root
+path: /app/data/annotated/pieces
 train: images/train
 val:   images/val
 test:  images/test
 
 nc: 12
 names:
-  - wK   # 0  White King
-  - wQ   # 1  White Queen
-  - wR   # 2  White Rook
-  - wB   # 3  White Bishop
-  - wN   # 4  White Knight
-  - wP   # 5  White Pawn
-  - bK   # 6  Black King
-  - bQ   # 7  Black Queen
-  - bR   # 8  Black Rook
-  - bB   # 9  Black Bishop
-  - bN   # 10 Black Knight
-  - bP   # 11 Black Pawn
+  - wK
+  - wQ
+  - wR
+  - wB
+  - wN
+  - wP
+  - bK
+  - bQ
+  - bR
+  - bB
+  - bN
+  - bP

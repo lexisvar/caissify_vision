@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def train(
-    model: str = "yolov8n.pt",
+    model: str = "yolo11n.pt",
     data: str = "train/configs/corners.yaml",
     epochs: int = 150,
     imgsz: int = 640,
@@ -77,7 +77,7 @@ def train(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train ChessVision corner detector")
-    parser.add_argument("--model", default="yolov8n.pt", help="Base YOLO model")
+    parser.add_argument("--model", default="yolo11n.pt", help="Base YOLO model (default: yolo11n.pt)")
     parser.add_argument("--epochs", type=int, default=150)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--imgsz", type=int, default=640)
