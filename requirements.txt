@@ -1,0 +1,36 @@
+# =============================================================================
+# ChessVision — Python Dependencies
+# =============================================================================
+# For GPU support, replace the torch line with:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+# ── Core ML / CV ──────────────────────────────────────────────────────────────
+# torch and torchvision are pre-installed in the Dockerfile from the CPU-only
+# wheel index (https://download.pytorch.org/whl/cpu) so that CUDA packages are
+# never pulled.  For local dev:  pip install torch torchvision
+ultralytics>=8.3.0          # YOLOv8 + YOLO11
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+albumentations>=1.4.0       # augmentation pipeline
+shapely>=2.0.0              # IoU geometry for square mapping
+
+# ── Chess Logic ───────────────────────────────────────────────────────────────
+python-chess>=1.10.0
+stockfish>=3.28.0           # python wrapper for stockfish binary
+
+# ── API Server ────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9     # file upload support
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+Pillow>=10.3.0
+httpx>=0.27.0               # async http client (Lichess integration)
+
+# ── Dev / Training ────────────────────────────────────────────────────────────
+wandb>=0.17.0               # experiment tracking
+roboflow>=1.1.0             # dataset management
+pytest>=8.2.0
+pytest-asyncio>=0.23.0

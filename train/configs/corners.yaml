@@ -1,0 +1,20 @@
+# corners.yaml
+# YOLOv8/YOLO11 training config for chessboard corner detection
+# Annotate 4 corner regions per image (or keypoints depending on your labeling)
+#
+# Classes:
+#   0: corner  (single class — position disambiguated by location)
+
+path: data/annotated/corners    # dataset root
+train: images/train
+val:   images/val
+test:  images/test              # optional
+
+nc: 1
+names: ["corner"]
+
+# Recommended augmentations for corner detection:
+# - Rotation ±30°  (boards seen at various angles)
+# - Brightness/contrast variation  (indoor lighting)
+# - Perspective distortion         (simulates camera tilt)
+# These are configured in train/train_corner_detector.py

@@ -1,0 +1,1 @@
+"""ChessVision FastAPI application package."""

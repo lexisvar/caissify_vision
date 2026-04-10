@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+
+# Model weights (too large for git — use the Docker volume or DVC)
+models/**/*.pt
+models/**/*.onnx
+
+# Training outputs
+runs/
+
+# Data (raw captures / annotations — use DVC or shared storage)
+data/raw/
+data/augmented/
+data/annotated/
+
+# Calibration (machine-specific)
+data/calibration.json
+
+# Recorded games (session data)
+data/games/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Static files
+staticfiles/
+mediafiles/

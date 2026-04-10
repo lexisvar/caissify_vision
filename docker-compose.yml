@@ -1,0 +1,65 @@
+services:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Main ChessVision inference API  (FastAPI + PyTorch + OpenCV)
+  # ──────────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Uncomment for GPU build:
+      # args:
+      #   BASE_IMAGE: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+      #   TORCH_INDEX: "https://download.pytorch.org/whl/cu121"
+    image: chessvision:latest
+    container_name: chessvision_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8006}:8006"
+    env_file:
+      - .env
+    volumes:
+      # Model weights — mount as external volume so they persist across rebuilds
+      - model_weights:/app/models
+      # Calibration data (homography matrices, camera configs)
+      - ./data/calibration.json:/app/data/calibration.json
+      # Live reload for local development: mount src/ into the container
+      # Comment this out for production deployments
+      - ./src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s    # Allow time for model weights to load into memory
+    # Uncomment to enable NVIDIA GPU passthrough (requires nvidia-container-toolkit)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Nginx reverse proxy  (optional — enable with: docker-compose --profile proxy up)
+  # ──────────────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: chessvision_nginx
+    profiles: ["proxy"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/chessvision.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  model_weights:
+    name: chessvision_model_weights
+    # To pre-populate weights on first run:
+    #   docker run --rm -v chessvision_model_weights:/models \
+    #     -v $(pwd)/models:/src alpine cp -r /src/. /models/
